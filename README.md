@@ -1,6 +1,6 @@
 # The Art Forge — Lịch Học Vẽ Thiếu Nhi
 
-Ứng dụng quản lý lịch học cho lớp vẽ (Next.js + Supabase), triển khai trên Vercel.
+Ứng dụng quản lý lịch học cho lớp vẽ (Next.js + Supabase), triển khai trên Vercel tại https://the-art-forge-phu15.vercel.app.
 
 - **Trang công khai** (`/`): lịch học tuần, tra cứu lịch & kết quả học bằng mã số học sinh.
 - **Trang quản trị** (`/admin`): đăng nhập bằng Supabase Auth (email/mật khẩu), thêm học sinh, thêm/huỷ buổi học, báo nghỉ, điểm danh & ghi kết quả (nhận xét + ảnh bức vẽ).
