@@ -236,6 +236,7 @@
     background:none;border:1px solid var(--warn);color:var(--warn);
     border-radius:9px;padding:6px 8px;font-size:0.76rem;cursor:pointer;font-family:inherit;
   }
+  .attendance-link{color:var(--accent-2);}
   .day-actions{margin-top:auto;padding-top:6px;display:flex;flex-direction:column;gap:4px;}
   .add-note-btn{
     width:100%;background:none;border:none;color:var(--ink-soft);
@@ -256,6 +257,58 @@
   .materials-toggle::after{content:"▾";transition:transform 0.15s;color:var(--ink-soft);}
   .materials-toggle[aria-expanded="true"]::after{transform:rotate(180deg);}
   .materials-body{padding:0 18px 16px;color:var(--ink-soft);font-size:0.88rem;}
+  .lookup-panel{
+    background:var(--surface);border:1px solid var(--line);border-radius:16px;
+    box-shadow:var(--shadow);padding:16px 18px;display:flex;flex-direction:column;gap:10px;
+  }
+  .lookup-panel h2{margin:0;font-size:1rem;}
+  .lookup-hint{margin:0;color:var(--ink-soft);font-size:0.82rem;}
+  .lookup-row{display:flex;gap:8px;}
+  .lookup-row input{
+    flex:1;font-family:inherit;font-size:0.9rem;
+    border:1px solid var(--line);border-radius:10px;padding:9px 10px;
+    background:var(--bg);color:var(--ink);text-transform:uppercase;
+  }
+  .lookup-result{
+    border-top:1px dashed var(--line);padding-top:10px;
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .lookup-result h3{margin:0;font-size:0.95rem;}
+  .lookup-list{display:flex;flex-direction:column;gap:4px;}
+  .lookup-entry{
+    background:var(--surface-2);border-radius:10px;padding:8px 10px;
+    font-size:0.85rem;display:flex;flex-direction:column;gap:4px;
+  }
+  .entry-date{font-weight:600;font-variant-numeric:tabular-nums;}
+  .entry-comment{color:var(--ink-soft);}
+  .attendance-photo-preview{
+    max-width:160px;border-radius:10px;border:1px solid var(--line);display:block;
+  }
+  .students-panel{
+    background:var(--surface);border:1px solid var(--line);border-radius:16px;
+    box-shadow:var(--shadow);overflow:hidden;
+  }
+  .student-row{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    padding:8px 0;border-bottom:1px dashed var(--line);font-size:0.85rem;
+  }
+  .student-row:last-child{border-bottom:none;}
+  .student-row .name{font-weight:600;flex:1;min-width:120px;}
+  .code-tag{
+    font-family:"Be Vietnam Pro",monospace;font-weight:700;letter-spacing:0.04em;
+    background:var(--accent-2-soft);color:var(--accent-2);
+    border-radius:6px;padding:2px 8px;font-size:0.78rem;
+  }
+  .attendance-row{
+    display:flex;flex-direction:column;gap:6px;
+    background:var(--surface-2);border-radius:10px;padding:10px;
+  }
+  .attendance-row .row-head{display:flex;align-items:center;gap:8px;font-weight:600;font-size:0.88rem;cursor:pointer;}
+  .attendance-row input[type="text"]{
+    font-family:inherit;font-size:0.85rem;border:1px solid var(--line);border-radius:8px;
+    padding:7px 9px;background:var(--bg);color:var(--ink);
+  }
+  #attendanceRows{display:flex;flex-direction:column;gap:10px;max-height:50vh;overflow-y:auto;}
   .site-footer{text-align:center;color:var(--ink-soft);font-size:0.8rem;padding-top:6px;}
   .modal-backdrop{
     position:fixed;inset:0;background:rgba(20,16,22,0.45);
@@ -319,6 +372,16 @@
     <div class="info-item pickup"><strong>💓 Lưu ý</strong><span>Phụ huynh vui lòng đưa đón bé đúng giờ giúp cô ạ</span></div>
   </section>
 
+  <section class="lookup-panel">
+    <h2>👀 Xem lịch &amp; kết quả học của bé</h2>
+    <p class="lookup-hint">Nhập mã số học sinh (cô đã gửi cho phụ huynh) để xem các buổi bé đã học và nhận xét của cô.</p>
+    <div class="lookup-row">
+      <input id="lookupCode" type="text" placeholder="VD: AN482" maxlength="20">
+      <button class="btn primary" id="lookupBtn">Xem</button>
+    </div>
+    <div class="lookup-result" id="lookupResult" hidden></div>
+  </section>
+
   <nav class="week-nav">
     <button class="nav-btn" id="prevWeek" aria-label="Tuần trước">‹</button>
     <div class="week-label" id="weekLabel">—</div>
@@ -341,6 +404,14 @@
     </div>
   </section>
 
+  <section class="students-panel" id="studentsPanel" hidden>
+    <button class="materials-toggle" id="studentsToggle" aria-expanded="false">👨‍👩‍👧 Quản lý học sinh &amp; mã số</button>
+    <div class="materials-body" id="studentsBody" hidden>
+      <p class="lookup-hint">Mã số dùng để phụ huynh tra cứu lịch &amp; kết quả học của bé. Học sinh mới được tạo tự động khi bạn thêm bé vào một buổi học.</p>
+      <div id="studentsList"></div>
+    </div>
+  </section>
+
   <footer class="site-footer">
     <p>452 Bạch Đằng, phường Quy Nhơn, tỉnh Gia Lai</p>
   </footer>
@@ -351,17 +422,23 @@
     <h2>Thêm bé vào lớp</h2>
     <p class="sub" id="studentModalSub"></p>
     <div class="field">
-      <label for="studentName">Tên bé</label>
-      <input id="studentName" type="text" maxlength="60" placeholder="VD: Bé An">
+      <label for="studentPick">Học sinh</label>
+      <select id="studentPick"></select>
     </div>
-    <div class="field-row">
+    <div id="newStudentFields">
       <div class="field">
-        <label for="studentAge">Tuổi</label>
-        <input id="studentAge" type="number" min="4" max="15" placeholder="VD: 7">
+        <label for="studentName">Tên bé</label>
+        <input id="studentName" type="text" maxlength="60" placeholder="VD: Bé An">
       </div>
-      <div class="field">
-        <label for="studentPhone">SĐT phụ huynh</label>
-        <input id="studentPhone" type="text" maxlength="20" placeholder="Không bắt buộc">
+      <div class="field-row">
+        <div class="field">
+          <label for="studentAge">Tuổi</label>
+          <input id="studentAge" type="number" min="4" max="15" placeholder="VD: 7">
+        </div>
+        <div class="field">
+          <label for="studentPhone">SĐT phụ huynh</label>
+          <input id="studentPhone" type="text" maxlength="20" placeholder="Không bắt buộc">
+        </div>
       </div>
     </div>
     <div class="field">
@@ -371,6 +448,18 @@
     <div class="modal-actions">
       <button class="btn ghost" id="studentCancel">Huỷ</button>
       <button class="btn primary" id="studentSave">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="attendanceModalBackdrop" hidden>
+  <div class="modal" id="attendanceModal">
+    <h2>Điểm danh &amp; kết quả buổi học</h2>
+    <p class="sub" id="attendanceModalSub"></p>
+    <div id="attendanceRows"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="attendanceCancel">Huỷ</button>
+      <button class="btn primary" id="attendanceSave">Lưu</button>
     </div>
   </div>
 </div>
@@ -392,13 +481,13 @@
 
 <div class="toast" id="toast" hidden></div>
 
-<script id="app-state" type="application/json">{"bookings":[{"id":"seed-1","date":"2026-09-08","slotId":"chieu1","name":"Bé Minh","age":6,"phone":"","note":"","sample":true},{"id":"seed-2","date":"2026-09-12","slotId":"sang1","name":"Bé Lan","age":9,"phone":"","note":"","sample":true}],"notes":[]}</script>
+<script id="app-state" type="application/json">{"bookings":[{"id":"seed-1","date":"2026-09-08","slotId":"chieu1","studentId":"stu-seed-1","note":"","sample":true},{"id":"seed-2","date":"2026-09-12","slotId":"sang1","studentId":"stu-seed-2","note":"","sample":true}],"notes":[],"students":[{"id":"stu-seed-1","code":"MI482","name":"Bé Minh","age":6,"phone":"","sample":true},{"id":"stu-seed-2","code":"LA205","name":"Bé Lan","age":9,"phone":"","sample":true}],"attendance":[{"id":"att-seed-1","studentId":"stu-seed-1","date":"2026-09-01","slotId":"chieu1","comment":"Bé vẽ rất đẹp, tiến bộ về phối màu (mẫu)","photo":null,"createdAt":1756684800000,"sample":true}]}</script>
 <script id="app-logic">
 (function(){
   "use strict";
   var SELF_SRC = document.currentScript.textContent;
 
-  var HTML_HEAD = "<!doctype html>\n<html lang=\"vi\">\n<head>\n<meta charset=\"UTF-8\">\n<title>Lịch Học Vẽ Thiếu Nhi</title>\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n<link href=\"https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap\" rel=\"stylesheet\">\n<style>" + document.querySelector("style").textContent + "</style>\n</head>\n<body>\n" + document.querySelector(".page").outerHTML + "\n" + document.getElementById("studentModalBackdrop").outerHTML + "\n" + document.getElementById("noteModalBackdrop").outerHTML + "\n" + document.getElementById("toast").outerHTML + "\n<script id=\"app-state\" type=\"application/json\">";
+  var HTML_HEAD = "<!doctype html>\n<html lang=\"vi\">\n<head>\n<meta charset=\"UTF-8\">\n<title>Lịch Học Vẽ Thiếu Nhi</title>\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n<link href=\"https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap\" rel=\"stylesheet\">\n<style>" + document.querySelector("style").textContent + "</style>\n</head>\n<body>\n" + document.querySelector(".page").outerHTML + "\n" + document.getElementById("studentModalBackdrop").outerHTML + "\n" + document.getElementById("attendanceModalBackdrop").outerHTML + "\n" + document.getElementById("noteModalBackdrop").outerHTML + "\n" + document.getElementById("toast").outerHTML + "\n<script id=\"app-state\" type=\"application/json\">";
 
   var HTML_TAIL = "<\/script>\n<script id=\"app-logic\">" + SELF_SRC + "<\/script>\n</body>\n</html>";
 
@@ -451,6 +540,24 @@
     var slots = isWeekend(dow) ? WEEKEND_SLOTS : WEEKDAY_SLOTS;
     for(var i=0;i<slots.length;i++){ if(slots[i].id===slotId) return slots[i]; }
     return null;
+  }
+  function findStudent(id){
+    return state.students.filter(function(s){ return s.id===id; })[0] || null;
+  }
+  function studentsSorted(){
+    return state.students.slice().sort(function(a,b){ return a.name.localeCompare(b.name,"vi"); });
+  }
+  function stripDiacritics(s){
+    return String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"");
+  }
+  function generateStudentCode(name){
+    var letters = stripDiacritics(name).toUpperCase().replace(/[^A-Z]/g,"");
+    var prefix = letters.slice(0,2) || "HS";
+    var code;
+    do {
+      code = prefix + Math.floor(100 + Math.random()*900);
+    } while(state.students.some(function(s){ return s.code===code; }));
+    return code;
   }
 
   function el(tag, cls, html){
@@ -552,9 +659,10 @@
 
           var list = el("div","student-list");
           bookingsFor(iso, slot.id).forEach(function(b){
+            var stu = findStudent(b.studentId);
             var chip = el("div","student-chip" + (b.sample ? " is-sample" : ""));
-            chip.appendChild(el("span","name", escapeHtml(b.name)));
-            if(b.age) chip.appendChild(el("span","age-tag", b.age+" tuổi"));
+            chip.appendChild(el("span","name", escapeHtml(stu ? stu.name : "(học sinh đã xoá)")));
+            if(stu && stu.age) chip.appendChild(el("span","age-tag", stu.age+" tuổi"));
             if(b.sample) chip.appendChild(el("span","sample-tag","mẫu"));
             if(canEdit){
               var rm = el("button","","×");
@@ -575,6 +683,9 @@
               var addBtn = el("button","add-student-btn","+ Thêm bé");
               addBtn.addEventListener("click", function(){ openStudentModal(iso, slot.id, slot); });
               card.appendChild(addBtn);
+              var attendanceBtn = el("button","cancel-slot-btn attendance-link","📷 Điểm danh / kết quả");
+              attendanceBtn.addEventListener("click", function(){ openAttendanceModal(iso, slot.id, slot); });
+              card.appendChild(attendanceBtn);
               var cancelSlotBtn = el("button","cancel-slot-btn","Huỷ buổi này");
               cancelSlotBtn.addEventListener("click", function(){ openNoteModal(iso, "closed", slot.id, slot); });
               card.appendChild(cancelSlotBtn);
@@ -603,6 +714,35 @@
 
       grid.appendChild(col);
     });
+
+    var studentsPanel = document.getElementById("studentsPanel");
+    studentsPanel.hidden = !canEdit;
+    if(canEdit) renderStudentsList();
+  }
+
+  function renderStudentsList(){
+    var wrap = document.getElementById("studentsList");
+    wrap.innerHTML = "";
+    var list = studentsSorted();
+    if(!list.length){
+      wrap.appendChild(el("p","lookup-hint","Chưa có học sinh nào. Thêm bé vào một buổi học để tạo hồ sơ học sinh."));
+      return;
+    }
+    list.forEach(function(s){
+      var row = el("div","student-row");
+      row.appendChild(el("span","name", escapeHtml(s.name) + (s.age ? (" · "+s.age+" tuổi") : "")));
+      row.appendChild(el("span","code-tag", s.code));
+      if(s.phone) row.appendChild(el("span","", "📞 " + escapeHtml(s.phone)));
+      if(s.sample) row.appendChild(el("span","sample-tag","mẫu"));
+      var rm = el("button","cancel-slot-btn","Xoá");
+      rm.addEventListener("click", function(){
+        if(window.confirm("Xoá học sinh \"" + s.name + "\"? Các buổi đăng ký và kết quả của bé cũng sẽ bị xoá.")){
+          removeStudent(s.id);
+        }
+      });
+      row.appendChild(rm);
+      wrap.appendChild(row);
+    });
   }
 
   function openStudentModal(dateISO, slotId, slot){
@@ -610,6 +750,14 @@
     var d = new Date(dateISO+"T00:00:00");
     document.getElementById("studentModalSub").textContent =
       DAY_NAMES[(d.getDay()+6)%7] + " " + fmtShort(d) + " · " + slot.start + "–" + slot.end;
+    var pick = document.getElementById("studentPick");
+    pick.innerHTML = "";
+    pick.appendChild(new Option("+ Học sinh mới", ""));
+    studentsSorted().forEach(function(s){
+      pick.appendChild(new Option(s.name + " (" + s.code + ")", s.id));
+    });
+    pick.value = "";
+    document.getElementById("newStudentFields").hidden = false;
     document.getElementById("studentName").value = "";
     document.getElementById("studentAge").value = "";
     document.getElementById("studentPhone").value = "";
@@ -634,6 +782,100 @@
     document.getElementById("noteText").focus();
   }
   function closeNoteModal(){ document.getElementById("noteModalBackdrop").hidden = true; pendingCtx = null; }
+
+  var attendanceCtx = null;
+  var attendanceRowsData = [];
+
+  function openAttendanceModal(dateISO, slotId, slot){
+    var bookings = bookingsFor(dateISO, slotId);
+    if(!bookings.length){ toast("Chưa có bé đăng ký buổi này để điểm danh."); return; }
+    attendanceCtx = {date: dateISO, slotId: slotId};
+    var d = new Date(dateISO+"T00:00:00");
+    document.getElementById("attendanceModalSub").textContent =
+      DAY_NAMES[(d.getDay()+6)%7] + " " + fmtShort(d) + " · " + slot.start + "–" + slot.end;
+    var wrap = document.getElementById("attendanceRows");
+    wrap.innerHTML = "";
+    attendanceRowsData = [];
+    bookings.forEach(function(b){
+      var stu = findStudent(b.studentId);
+      if(!stu) return;
+      var existing = state.attendance.filter(function(a){
+        return a.date===dateISO && a.slotId===slotId && a.studentId===stu.id;
+      })[0] || null;
+
+      var row = el("div","attendance-row");
+      var head = el("label","row-head");
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = true;
+      head.appendChild(cb);
+      head.appendChild(document.createTextNode(" " + stu.name + (stu.age ? (" · "+stu.age+" tuổi") : "")));
+      row.appendChild(head);
+
+      var commentInput = document.createElement("input");
+      commentInput.type = "text";
+      commentInput.maxLength = 160;
+      commentInput.placeholder = "Nhận xét của cô (không bắt buộc)";
+      commentInput.value = existing ? (existing.comment || "") : "";
+      row.appendChild(commentInput);
+
+      var fileInput = document.createElement("input");
+      fileInput.type = "file";
+      fileInput.accept = "image/*";
+      row.appendChild(fileInput);
+
+      var previewWrap = el("div","");
+      var removePhotoFlag = {v:false};
+      if(existing && existing.photo){
+        var img = document.createElement("img");
+        img.src = existing.photo;
+        img.className = "attendance-photo-preview";
+        previewWrap.appendChild(img);
+        var rmPhotoBtn = el("button","cancel-slot-btn","Xoá ảnh hiện tại");
+        rmPhotoBtn.addEventListener("click", function(){
+          removePhotoFlag.v = true;
+          previewWrap.innerHTML = "";
+          previewWrap.appendChild(el("span","lookup-hint","Ảnh sẽ được xoá khi lưu."));
+        });
+        previewWrap.appendChild(rmPhotoBtn);
+      }
+      row.appendChild(previewWrap);
+
+      wrap.appendChild(row);
+      attendanceRowsData.push({
+        studentId: stu.id, checkbox: cb, commentInput: commentInput,
+        fileInput: fileInput, existing: existing, removePhotoFlag: removePhotoFlag
+      });
+    });
+    document.getElementById("attendanceModalBackdrop").hidden = false;
+  }
+  function closeAttendanceModal(){
+    document.getElementById("attendanceModalBackdrop").hidden = true;
+    attendanceCtx = null;
+    attendanceRowsData = [];
+  }
+
+  function resizeImageFile(file, maxW){
+    return new Promise(function(resolve, reject){
+      var reader = new FileReader();
+      reader.onload = function(e){
+        var img = new Image();
+        img.onload = function(){
+          var scale = Math.min(1, maxW / img.width);
+          var w = Math.max(1, Math.round(img.width * scale));
+          var h = Math.max(1, Math.round(img.height * scale));
+          var canvas = document.createElement("canvas");
+          canvas.width = w; canvas.height = h;
+          canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL("image/jpeg", 0.6));
+        };
+        img.onerror = function(){ reject(new Error("image_load_failed")); };
+        img.src = e.target.result;
+      };
+      reader.onerror = function(){ reject(new Error("file_read_failed")); };
+      reader.readAsDataURL(file);
+    });
+  }
 
   function toast(msg){
     var t = document.getElementById("toast");
@@ -672,11 +914,6 @@
     }
   }
 
-  function addBooking(data){
-    var ns = cloneState();
-    ns.bookings.push(data);
-    saveState(ns);
-  }
   function removeBooking(id){
     var ns = cloneState();
     ns.bookings = ns.bookings.filter(function(b){ return b.id!==id; });
@@ -692,6 +929,13 @@
     ns.notes = ns.notes.filter(function(n){ return n.id!==id; });
     saveState(ns);
   }
+  function removeStudent(id){
+    var ns = cloneState();
+    ns.students = ns.students.filter(function(s){ return s.id!==id; });
+    ns.bookings = ns.bookings.filter(function(b){ return b.studentId!==id; });
+    ns.attendance = ns.attendance.filter(function(a){ return a.studentId!==id; });
+    saveState(ns);
+  }
 
   document.getElementById("prevWeek").addEventListener("click", function(){ weekOffset--; render(); });
   document.getElementById("nextWeek").addEventListener("click", function(){ weekOffset++; render(); });
@@ -703,28 +947,144 @@
     render();
   });
 
-  document.getElementById("materialsToggle").addEventListener("click", function(){
-    var body = document.getElementById("materialsBody");
-    var expanded = this.getAttribute("aria-expanded")==="true";
-    this.setAttribute("aria-expanded", String(!expanded));
-    body.hidden = expanded;
+  function bindToggle(toggleId, bodyId){
+    document.getElementById(toggleId).addEventListener("click", function(){
+      var body = document.getElementById(bodyId);
+      var expanded = this.getAttribute("aria-expanded")==="true";
+      this.setAttribute("aria-expanded", String(!expanded));
+      body.hidden = expanded;
+    });
+  }
+  bindToggle("materialsToggle","materialsBody");
+  bindToggle("studentsToggle","studentsBody");
+
+  document.getElementById("studentPick").addEventListener("change", function(){
+    document.getElementById("newStudentFields").hidden = this.value !== "";
   });
 
   document.getElementById("studentCancel").addEventListener("click", closeStudentModal);
   document.getElementById("studentModalBackdrop").addEventListener("click", function(e){ if(e.target===this) closeStudentModal(); });
   document.getElementById("studentSave").addEventListener("click", function(){
-    var name = document.getElementById("studentName").value.trim();
-    if(!name){ toast("Vui lòng nhập tên bé."); return; }
-    var age = parseInt(document.getElementById("studentAge").value, 10) || null;
-    var phone = document.getElementById("studentPhone").value.trim();
-    var note = document.getElementById("studentNote").value.trim();
     var ctx = pendingCtx;
+    var pickId = document.getElementById("studentPick").value;
+    var note = document.getElementById("studentNote").value.trim();
+    var ns = cloneState();
+    var studentId;
+    if(pickId){
+      studentId = pickId;
+    } else {
+      var name = document.getElementById("studentName").value.trim();
+      if(!name){ toast("Vui lòng nhập tên bé hoặc chọn học sinh có sẵn."); return; }
+      var age = parseInt(document.getElementById("studentAge").value, 10) || null;
+      var phone = document.getElementById("studentPhone").value.trim();
+      var newStu = {
+        id: "stu_" + Date.now() + "_" + Math.random().toString(36).slice(2,7),
+        code: generateStudentCode(name), name: name, age: age, phone: phone
+      };
+      ns.students.push(newStu);
+      studentId = newStu.id;
+      window.alert("Đã tạo học sinh mới: " + newStu.name + "\nMã số tra cứu: " + newStu.code + "\n\nHãy gửi mã này cho phụ huynh để xem lịch & kết quả học của bé.");
+    }
     closeStudentModal();
-    addBooking({
+    ns.bookings.push({
       id: "b_" + Date.now() + "_" + Math.random().toString(36).slice(2,7),
-      date: ctx.date, slotId: ctx.slotId,
-      name: name, age: age, phone: phone, note: note
+      date: ctx.date, slotId: ctx.slotId, studentId: studentId, note: note
     });
+    saveState(ns);
+  });
+
+  document.getElementById("attendanceCancel").addEventListener("click", closeAttendanceModal);
+  document.getElementById("attendanceModalBackdrop").addEventListener("click", function(e){ if(e.target===this) closeAttendanceModal(); });
+  document.getElementById("attendanceSave").addEventListener("click", function(){
+    var ctx = attendanceCtx;
+    var rows = attendanceRowsData;
+    closeAttendanceModal();
+    var tasks = rows.map(function(row){
+      if(row.fileInput.files && row.fileInput.files[0]){
+        return resizeImageFile(row.fileInput.files[0], 480).then(function(dataUrl){
+          return {row: row, photo: dataUrl};
+        }).catch(function(){
+          toast("Không thể xử lý một ảnh, đã bỏ qua ảnh đó.");
+          return {row: row, photo: row.existing ? row.existing.photo : null};
+        });
+      }
+      return Promise.resolve({row: row, photo: row.removePhotoFlag.v ? null : (row.existing ? row.existing.photo : null)});
+    });
+    Promise.all(tasks).then(function(results){
+      var ns = cloneState();
+      results.forEach(function(r){
+        var row = r.row;
+        ns.attendance = ns.attendance.filter(function(a){
+          return !(a.date===ctx.date && a.slotId===ctx.slotId && a.studentId===row.studentId);
+        });
+        if(row.checkbox.checked){
+          ns.attendance.push({
+            id: row.existing ? row.existing.id : ("att_" + Date.now() + "_" + Math.random().toString(36).slice(2,7)),
+            studentId: row.studentId, date: ctx.date, slotId: ctx.slotId,
+            comment: row.commentInput.value.trim(), photo: r.photo,
+            createdAt: row.existing ? row.existing.createdAt : Date.now()
+          });
+        }
+      });
+      saveState(ns);
+    });
+  });
+
+  function renderLookupResult(student){
+    var wrap = document.getElementById("lookupResult");
+    wrap.innerHTML = "";
+    wrap.hidden = false;
+    if(!student){
+      wrap.appendChild(el("p","lookup-hint","Không tìm thấy mã số này. Vui lòng kiểm tra lại hoặc liên hệ cô giáo."));
+      return;
+    }
+    wrap.appendChild(el("h3","", escapeHtml(student.name) + (student.age ? (" · "+student.age+" tuổi") : "") + (student.sample ? " (mẫu)" : "")));
+
+    var todayISO = toISO(new Date());
+    var upcoming = state.bookings.filter(function(b){ return b.studentId===student.id && b.date >= todayISO; })
+      .sort(function(a,b){ return a.date.localeCompare(b.date); });
+    if(upcoming.length){
+      wrap.appendChild(el("p","","<strong>Lịch sắp tới</strong>"));
+      var upList = el("div","lookup-list");
+      upcoming.forEach(function(b){
+        var sm = findSlotMeta(b.date, b.slotId);
+        upList.appendChild(el("div","lookup-entry",
+          fmtShort(new Date(b.date+"T00:00:00")) + " · " + (sm ? (sm.label+" "+sm.start+"–"+sm.end) : b.slotId)));
+      });
+      wrap.appendChild(upList);
+    }
+
+    var history = state.attendance.filter(function(a){ return a.studentId===student.id; })
+      .sort(function(a,b){ return b.date.localeCompare(a.date); });
+    wrap.appendChild(el("p","","<strong>Đã học &amp; kết quả</strong>"));
+    if(!history.length){
+      wrap.appendChild(el("p","lookup-hint","Chưa có buổi học nào được ghi nhận."));
+    } else {
+      history.forEach(function(a){
+        var sm = findSlotMeta(a.date, a.slotId);
+        var entry = el("div","lookup-entry");
+        entry.appendChild(el("div","entry-date",
+          fmtShort(new Date(a.date+"T00:00:00")) + " · " + (sm ? (sm.label+" "+sm.start+"–"+sm.end) : a.slotId) + (a.sample ? " (mẫu)" : "")));
+        if(a.comment) entry.appendChild(el("div","entry-comment", escapeHtml(a.comment)));
+        if(a.photo){
+          var img = document.createElement("img");
+          img.src = a.photo;
+          img.className = "attendance-photo-preview";
+          entry.appendChild(img);
+        }
+        wrap.appendChild(entry);
+      });
+    }
+  }
+
+  document.getElementById("lookupBtn").addEventListener("click", function(){
+    var code = document.getElementById("lookupCode").value.trim().toUpperCase();
+    if(!code){ toast("Vui lòng nhập mã số học sinh."); return; }
+    var student = state.students.filter(function(s){ return s.code.toUpperCase()===code; })[0] || null;
+    renderLookupResult(student);
+  });
+  document.getElementById("lookupCode").addEventListener("keydown", function(e){
+    if(e.key==="Enter") document.getElementById("lookupBtn").click();
   });
 
   document.getElementById("noteCancel").addEventListener("click", closeNoteModal);
